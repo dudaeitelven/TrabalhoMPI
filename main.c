@@ -54,9 +54,11 @@ int main(int argc, char **argv ){
 	CABECALHO cabecalho;
 	RGB pixel;
 	int i, j;
+	int i2, j2;
 	short media;
 	char aux;
 	int ali;
+	int tamanhoMascara;
 
 	printf("Digite o nome do arquivo de entrada:\n");
 	scanf("%s", entrada);
@@ -64,6 +66,8 @@ int main(int argc, char **argv ){
 	printf("Digite o nome do arquivo de saida:\n");
 	scanf("%s", saida);
 
+	printf("Digite o tamanho da mascara:\n");
+	scanf("%d", &tamanhoMascara);
 
 	FILE *fin = fopen(entrada, "rb");
 
@@ -89,6 +93,7 @@ int main(int argc, char **argv ){
 	fwrite(&cabecalho, sizeof(CABECALHO), 1, fout);
 
 	RGB **imagem = (RGB **)malloc(cabecalho.altura*sizeof(RGB *));
+	RGB rgbAux;
 
 	//Alocar imagem
 	for(i=0; i<cabecalho.altura; i++){
@@ -115,10 +120,34 @@ int main(int argc, char **argv ){
 	//Processar imagem
 	for(i=0; i<cabecalho.altura; i++){
 		for(j=0; j<cabecalho.largura; j++){
-			media = (imagem[i][j].red + imagem[i][j].green + imagem[i][j].blue) / 3;
-			imagem[i][j].red = media;
-			imagem[i][j].green = media;
-			imagem[i][j].blue = media;
+			if (tamanhoMascara == 3) {
+				i2 = i-1;
+				j2 = j-1;
+			}
+			else if (tamanhoMascara == 5) {
+				i2 = i-2;
+				j2 = j-2;
+			}
+			else if (tamanhoMascara == 7) {
+				i2 = i-3;
+				j2 = j-3;
+			}
+
+			if (i2 < 0) i2 = 0;
+			if (j2 < 0) j2 = 0;
+	
+			//Calcular a mediana de cada pixel da imagem.
+			for(i2; i2<(i2 + tamanhoMascara); i2++){
+				for(j2; j2<(j2 + tamanhoMascara); j2++){
+					rgbAux.red   = rgbAux.red   + imagem[i2][j2].red;
+					rgbAux.green = rgbAux.green + imagem[i2][j2].green;
+					rgbAux.blue  = rgbAux.blue  + imagem[i2][j2].blue;
+				}
+			}
+			
+			imagem[i][j].red    = (rgbAux.red / 9);
+			imagem[i][j].green  = (rgbAux.green / 9);
+			imagem[i][j].blue   = (rgbAux.blue / 9);
 		}
 	}
 
