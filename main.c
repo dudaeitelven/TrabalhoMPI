@@ -40,25 +40,21 @@ struct rgb{
 };
 typedef struct rgb RGB;
 
-/*
-int mediana(float v[]){
-	int T = 10; //tamanho do vetor
-	int mediana;
-	mediana = v[T/2-1];   //por algum motivo no meu só dava certo tirando 1 da conta
-	printf("Mediana: %i", mediana);
-}
-*/
-
 int main(int argc, char **argv ){
 	char entrada[100], saida[100];
 	CABECALHO cabecalho;
-	RGB pixel;
 	int i, j;
 	int i2, j2;
-	short media;
 	char aux;
 	int ali;
 	int tamanhoMascara;
+	int limiteI;
+	int limiteJ;
+    int iFor;
+    int iAux;
+    int posicaoMediana;
+    int lacoI, lacoJ;
+    int iAux2;
 
 	printf("Digite o nome do arquivo de entrada:\n");
 	scanf("%s", entrada);
@@ -92,8 +88,7 @@ int main(int argc, char **argv ){
 
 	fwrite(&cabecalho, sizeof(CABECALHO), 1, fout);
 
-	RGB **imagem = (RGB **)malloc(cabecalho.altura*sizeof(RGB *));
-	RGB rgbAux;
+	RGB **imagem  = (RGB **)malloc(cabecalho.altura*sizeof(RGB *));
 
 	//Alocar imagem
 	for(i=0; i<cabecalho.altura; i++){
@@ -121,37 +116,101 @@ int main(int argc, char **argv ){
 	for(i=0; i<cabecalho.altura; i++){
 		for(j=0; j<cabecalho.largura; j++){
 			if (tamanhoMascara == 3) {
-				i2 = i-1;
-				j2 = j-1;
+				lacoI = i-1;
+				limiteI = i + 1;
+
+				lacoJ = j-1;
+				limiteJ = j + 1;
+
+				posicaoMediana = 5;
 			}
 			else if (tamanhoMascara == 5) {
-				i2 = i-2;
-				j2 = j-2;
+				lacoI = i-2;
+				limiteI = i + 2;
+
+				lacoJ = j-2;
+				limiteJ = j + 2;
+
+				posicaoMediana = 13;
 			}
 			else if (tamanhoMascara == 7) {
-				i2 = i-3;
-				j2 = j-3;
+				lacoI = i-3;
+				limiteI = i + 3;
+
+				lacoJ = j-3;
+				limiteJ = j + 3;
+
+				posicaoMediana = 25;
 			}
 
-			if (i2 < 0) i2 = 0;
-			if (j2 < 0) j2 = 0;
-	
+            if (lacoI < 0) lacoI = 0;
+			if (lacoJ < 0) lacoJ = 0;
+
+            if (limiteI > cabecalho.altura)  limiteI = cabecalho.altura;
+			if (limiteJ > cabecalho.largura) limiteJ = cabecalho.largura;
+
+			RGB rgbAux[tamanhoMascara*tamanhoMascara];
+            for(iAux2=0; iAux2<tamanhoMascara*tamanhoMascara; iAux2++){
+                rgbAux[iAux2].red   = 0;
+                rgbAux[iAux2].green = 0;
+                rgbAux[iAux2].blue  = 0;
+			}
+
+			RGB rgbAux2;
+			rgbAux2.red   = 0;
+            rgbAux2.green = 0;
+            rgbAux2.blue  = 0;
+
 			//Calcular a mediana de cada pixel da imagem.
-			for(i2; i2<(i2 + tamanhoMascara); i2++){
-				for(j2; j2<(j2 + tamanhoMascara); j2++){
-					rgbAux.red   = rgbAux.red   + imagem[i2][j2].red;
-					rgbAux.green = rgbAux.green + imagem[i2][j2].green;
-					rgbAux.blue  = rgbAux.blue  + imagem[i2][j2].blue;
+			for(i2=lacoI; i2<=limiteI; i2++){
+				for(j2=lacoJ; j2<=limiteJ; j2++){
+					rgbAux[iAux].red   = imagem[i2][j2].red;
+					rgbAux[iAux].green = imagem[i2][j2].green;
+					rgbAux[iAux].blue  = imagem[i2][j2].blue;
+
+					iAux++;
 				}
 			}
-			
-			imagem[i][j].red    = (rgbAux.red / 9);
-			imagem[i][j].green  = (rgbAux.green / 9);
-			imagem[i][j].blue   = (rgbAux.blue / 9);
+
+            /*
+			//Ordenar vetores red
+            for (iFor = 0; iFor < iAux; iFor++) {
+                if (rgbAux[iFor].red > rgbAux[iFor + 1].red) {
+                    rgbAux2.red          = rgbAux[iFor].red;
+                    rgbAux[iFor].red     = rgbAux[iFor + 1].red;
+                    rgbAux[iFor + 1].red = rgbAux2.red;
+                }
+            }
+
+            //Ordenar vetores green
+            for (iFor = 0; iFor < iAux; iFor++) {
+                if (rgbAux[iFor].green > rgbAux[iFor + 1].green) {
+                    rgbAux2.green          = rgbAux[iFor].green;
+                    rgbAux[iFor].green     = rgbAux[iFor + 1].green;
+                    rgbAux[iFor + 1].green = rgbAux2.green;
+                }
+            }
+
+            //Ordenar vetores blue
+            for (iFor = 0; iFor < iAux; iFor++) {
+                if (rgbAux[iFor].blue > rgbAux[iFor + 1].blue) {
+                    rgbAux2.blue          = rgbAux[iFor].blue;
+                    rgbAux[iFor].blue     = rgbAux[iFor + 1].blue;
+                    rgbAux[iFor + 1].blue = rgbAux2.blue;
+                }
+            }
+
+            */
+
+            iAux = 0;
+
+			imagem[i][j].red    = rgbAux[posicaoMediana].red;
+			imagem[i][j].green  = rgbAux[posicaoMediana].green;
+			imagem[i][j].blue   = rgbAux[posicaoMediana].blue;
 		}
 	}
 
-	//Escrever a imagem 
+	//Escrever a imagem
 	for(i=0; i<cabecalho.altura; i++){
 		ali = (cabecalho.largura * 3) % 4;
 
@@ -164,7 +223,7 @@ int main(int argc, char **argv ){
 		}
 
 		for(j=0; j<ali; j++){
-			fwrite(&aux, sizeof(unsigned char), 1, fin);
+			fwrite(&aux, sizeof(unsigned char), 1, fout);
 		}
 	}
 
