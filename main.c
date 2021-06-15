@@ -43,18 +43,19 @@ typedef struct rgb RGB;
 int main(int argc, char **argv ){
 	char entrada[100], saida[100];
 	CABECALHO cabecalho;
-	int i, j;
+	int iForImagem, jForImagem;
 	int i2, j2;
 	char aux;
 	int ali;
 	int tamanhoMascara;
 	int limiteI;
 	int limiteJ;
-    int iFor;
-    int iAux;
+    int iForOrdenar;
+    int jForOrdenar;
+    int iTamanhoAux;
     int posicaoMediana;
     int lacoI, lacoJ;
-    int iAux2;
+    int iTamanhoAux2;
 
 	printf("Digite o nome do arquivo de entrada:\n");
 	scanf("%s", entrada);
@@ -62,8 +63,10 @@ int main(int argc, char **argv ){
 	printf("Digite o nome do arquivo de saida:\n");
 	scanf("%s", saida);
 
-	printf("Digite o tamanho da mascara:\n");
-	scanf("%d", &tamanhoMascara);
+    while ((tamanhoMascara != 3) && (tamanhoMascara != 5) && (tamanhoMascara != 7)) {
+        printf("Digite o tamanho da mascara:\n");
+        scanf("%d", &tamanhoMascara);
+    }
 
 	FILE *fin = fopen(entrada, "rb");
 
@@ -91,69 +94,69 @@ int main(int argc, char **argv ){
 	RGB **imagem  = (RGB **)malloc(cabecalho.altura*sizeof(RGB *));
 
 	//Alocar imagem
-	for(i=0; i<cabecalho.altura; i++){
-		imagem[i] = (RGB *)malloc(cabecalho.largura*sizeof(RGB));
+	for(iForImagem=0; iForImagem<cabecalho.altura; iForImagem++){
+		imagem[iForImagem] = (RGB *)malloc(cabecalho.largura*sizeof(RGB));
 	}
 
 	//Leitura da imagem
-	for(i=0; i<cabecalho.altura; i++){
+	for(iForImagem=0; iForImagem<cabecalho.altura; iForImagem++){
 		ali = (cabecalho.largura * 3) % 4;
 
 		if (ali != 0){
 			ali = 4 - ali;
 		}
 
-		for(j=0; j<cabecalho.largura; j++){
-			fread(&imagem[i][j], sizeof(RGB), 1, fin);
+		for(jForImagem=0; jForImagem<cabecalho.largura; jForImagem++){
+			fread(&imagem[iForImagem][jForImagem], sizeof(RGB), 1, fin);
 		}
 
-		for(j=0; j<ali; j++){
+		for(jForImagem=0; jForImagem<ali; jForImagem++){
 			fread(&aux, sizeof(unsigned char), 1, fin);
 		}
 	}
 
 	//Processar imagem
-	for(i=0; i<cabecalho.altura; i++){
-		for(j=0; j<cabecalho.largura; j++){
+	for(iForImagem=0; iForImagem<cabecalho.altura; iForImagem++){
+		for(jForImagem=0; jForImagem<cabecalho.largura; jForImagem++){
 			if (tamanhoMascara == 3) {
-				lacoI = i-1;
-				limiteI = i + 1;
+				lacoI = iForImagem-1;
+				limiteI = iForImagem + 1;
 
-				lacoJ = j-1;
-				limiteJ = j + 1;
+				lacoJ = jForImagem-1;
+				limiteJ = jForImagem + 1;
 
-				posicaoMediana = 5;
+				posicaoMediana = 4;
 			}
 			else if (tamanhoMascara == 5) {
-				lacoI = i-2;
-				limiteI = i + 2;
+				lacoI = iForImagem-2;
+				limiteI = iForImagem + 2;
 
-				lacoJ = j-2;
-				limiteJ = j + 2;
+				lacoJ = jForImagem-2;
+				limiteJ = jForImagem + 2;
 
-				posicaoMediana = 13;
+				posicaoMediana = 12;
 			}
 			else if (tamanhoMascara == 7) {
-				lacoI = i-3;
-				limiteI = i + 3;
+				lacoI = iForImagem-3;
+				limiteI = iForImagem + 3;
 
-				lacoJ = j-3;
-				limiteJ = j + 3;
+				lacoJ = jForImagem-3;
+				limiteJ = jForImagem + 3;
 
-				posicaoMediana = 25;
+				posicaoMediana = 24;
 			}
 
             if (lacoI < 0) lacoI = 0;
 			if (lacoJ < 0) lacoJ = 0;
 
-            if (limiteI > cabecalho.altura)  limiteI = cabecalho.altura;
-			if (limiteJ > cabecalho.largura) limiteJ = cabecalho.largura;
+            if (limiteI > (cabecalho.altura - 1))  limiteI = (cabecalho.altura - 1);
+			if (limiteJ > (cabecalho.largura - 1)) limiteJ = (cabecalho.largura - 1);
 
 			RGB rgbAux[tamanhoMascara*tamanhoMascara];
-            for(iAux2=0; iAux2<tamanhoMascara*tamanhoMascara; iAux2++){
-                rgbAux[iAux2].red   = 0;
-                rgbAux[iAux2].green = 0;
-                rgbAux[iAux2].blue  = 0;
+            for(iTamanhoAux2=0; iTamanhoAux2<tamanhoMascara*tamanhoMascara; iTamanhoAux2++){
+                rgbAux[iTamanhoAux2].red   = 0;
+                rgbAux[iTamanhoAux2].green = 0;
+                rgbAux[iTamanhoAux2].blue  = 0;
 			}
 
 			RGB rgbAux2;
@@ -161,68 +164,82 @@ int main(int argc, char **argv ){
             rgbAux2.green = 0;
             rgbAux2.blue  = 0;
 
+            iTamanhoAux  = 0;
+            iTamanhoAux2 = 0;
+
 			//Calcular a mediana de cada pixel da imagem.
 			for(i2=lacoI; i2<=limiteI; i2++){
 				for(j2=lacoJ; j2<=limiteJ; j2++){
-					rgbAux[iAux].red   = imagem[i2][j2].red;
-					rgbAux[iAux].green = imagem[i2][j2].green;
-					rgbAux[iAux].blue  = imagem[i2][j2].blue;
+					rgbAux[iTamanhoAux].red   = imagem[i2][j2].red;
+					rgbAux[iTamanhoAux].green = imagem[i2][j2].green;
+					rgbAux[iTamanhoAux].blue  = imagem[i2][j2].blue;
 
-					iAux++;
+					iTamanhoAux++;
 				}
 			}
 
-            /*
 			//Ordenar vetores red
-            for (iFor = 0; iFor < iAux; iFor++) {
-                if (rgbAux[iFor].red > rgbAux[iFor + 1].red) {
-                    rgbAux2.red          = rgbAux[iFor].red;
-                    rgbAux[iFor].red     = rgbAux[iFor + 1].red;
-                    rgbAux[iFor + 1].red = rgbAux2.red;
+            for (iForOrdenar = 0; iForOrdenar < iTamanhoAux; iForOrdenar++)
+            {
+                for (jForOrdenar = 0; jForOrdenar < iTamanhoAux; jForOrdenar++)
+                {
+                    if (rgbAux[iForOrdenar].red < rgbAux[jForOrdenar].red)
+                    {
+                        rgbAux2.red             = rgbAux[iForOrdenar].red;
+                        rgbAux[iForOrdenar].red = rgbAux[jForOrdenar].red;
+                        rgbAux[jForOrdenar].red = rgbAux2.red;
+                    }
                 }
             }
 
             //Ordenar vetores green
-            for (iFor = 0; iFor < iAux; iFor++) {
-                if (rgbAux[iFor].green > rgbAux[iFor + 1].green) {
-                    rgbAux2.green          = rgbAux[iFor].green;
-                    rgbAux[iFor].green     = rgbAux[iFor + 1].green;
-                    rgbAux[iFor + 1].green = rgbAux2.green;
+            for (iForOrdenar = 0; iForOrdenar < iTamanhoAux; iForOrdenar++)
+            {
+                for (jForOrdenar = 0; jForOrdenar < iTamanhoAux; jForOrdenar++)
+                {
+                    if (rgbAux[iForOrdenar].green < rgbAux[jForOrdenar].green)
+                    {
+                        rgbAux2.green             = rgbAux[iForOrdenar].green;
+                        rgbAux[iForOrdenar].green = rgbAux[jForOrdenar].green;
+                        rgbAux[jForOrdenar].green = rgbAux2.green;
+                    }
                 }
             }
 
             //Ordenar vetores blue
-            for (iFor = 0; iFor < iAux; iFor++) {
-                if (rgbAux[iFor].blue > rgbAux[iFor + 1].blue) {
-                    rgbAux2.blue          = rgbAux[iFor].blue;
-                    rgbAux[iFor].blue     = rgbAux[iFor + 1].blue;
-                    rgbAux[iFor + 1].blue = rgbAux2.blue;
+            for (iForOrdenar = 0; iForOrdenar < iTamanhoAux; iForOrdenar++)
+            {
+                for (jForOrdenar = 0; jForOrdenar < iTamanhoAux; jForOrdenar++)
+                {
+                    if (rgbAux[iForOrdenar].blue < rgbAux[jForOrdenar].blue)
+                    {
+                        rgbAux2.blue             = rgbAux[iForOrdenar].blue;
+                        rgbAux[iForOrdenar].blue = rgbAux[jForOrdenar].blue;
+                        rgbAux[jForOrdenar].blue = rgbAux2.blue;
+                    }
                 }
             }
 
-            */
-
-            iAux = 0;
-
-			imagem[i][j].red    = rgbAux[posicaoMediana].red;
-			imagem[i][j].green  = rgbAux[posicaoMediana].green;
-			imagem[i][j].blue   = rgbAux[posicaoMediana].blue;
+            //Substituir valores pela mediana de cada pixel
+			imagem[iForImagem][jForImagem].red    = rgbAux[posicaoMediana].red;
+			imagem[iForImagem][jForImagem].green  = rgbAux[posicaoMediana].green;
+			imagem[iForImagem][jForImagem].blue   = rgbAux[posicaoMediana].blue;
 		}
 	}
 
 	//Escrever a imagem
-	for(i=0; i<cabecalho.altura; i++){
+	for(iForImagem=0; iForImagem<cabecalho.altura; iForImagem++){
 		ali = (cabecalho.largura * 3) % 4;
 
 		if (ali != 0){
 			ali = 4 - ali;
 		}
 
-		for(j=0; j<cabecalho.largura; j++){
-			fwrite(&imagem[i][j], sizeof(RGB), 1, fout);
+		for(jForImagem=0; jForImagem<cabecalho.largura; jForImagem++){
+			fwrite(&imagem[iForImagem][jForImagem], sizeof(RGB), 1, fout);
 		}
 
-		for(j=0; j<ali; j++){
+		for(jForImagem=0; jForImagem<ali; jForImagem++){
 			fwrite(&aux, sizeof(unsigned char), 1, fout);
 		}
 	}
