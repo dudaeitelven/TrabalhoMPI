@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <mpi.h>
 
 #pragma pack(1)
 
@@ -8,9 +9,9 @@ Para compilar:
 
 1 - Abrir o local do fonte
 
-2 - Digitar: gcc -o teste imagens.c
+2 - Digitar para compilar: mpicc -o mpi main.c
 
-3 - Digitar: ./teste
+3 - Digitar para rodar: mpirun -np <numero_processos> ./mpi <imagem_entrada> <imagem_saida> <mascara>
 */
 
 struct cabecalho {
@@ -41,22 +42,28 @@ struct rgb{
 typedef struct rgb RGB;
 
 int main(int argc, char **argv ){
-	char entrada[100], saida[100];
+	char *entrada, *saida;
+	int tamanhoMascara, nth;
 	CABECALHO cabecalho;
 	int iForImagem, jForImagem;
 	int i2, j2;
 	char aux;
-	int ali;
-	int tamanhoMascara;
-	int limiteI;
-	int limiteJ;
-    int iForOrdenar;
-    int jForOrdenar;
-    int iTamanhoAux;
-    int posicaoMediana;
-    int lacoI, lacoJ;
-    int iTamanhoAux2;
+	int ali, limiteI, limiteJ, iForOrdenar, jForOrdenar;
+	int iTamanhoAux, posicaoMediana, lacoI, lacoJ, iTamanhoAux2;
 
+
+
+	if ( argc != 4){
+		printf("%s <img_entrada> <img_saida> <mascara> \n", argv[0]);
+		exit(0);
+	}
+
+	entrada = argv[1];
+	saida = argv[2];
+    tamanhoMascara = atoi(argv[3]);
+
+
+	/*
 	printf("Digite o nome do arquivo de entrada:\n");
 	scanf("%s", entrada);
 
@@ -67,6 +74,7 @@ int main(int argc, char **argv ){
         printf("Digite o tamanho da mascara:\n");
         scanf("%d", &tamanhoMascara);
     }
+	*/
 
 	FILE *fin = fopen(entrada, "rb");
 
@@ -92,11 +100,14 @@ int main(int argc, char **argv ){
 	fwrite(&cabecalho, sizeof(CABECALHO), 1, fout);
 
 	RGB **imagem  = (RGB **)malloc(cabecalho.altura*sizeof(RGB *));
+	RGB **imagemSaida  = (RGB **)malloc(cabecalho.altura*sizeof(RGB *));
 
 	//Alocar imagem
 	for(iForImagem=0; iForImagem<cabecalho.altura; iForImagem++){
 		imagem[iForImagem] = (RGB *)malloc(cabecalho.largura*sizeof(RGB));
+		imagemSaida[iForImagem] = (RGB *)malloc(cabecalho.largura*sizeof(RGB));
 	}
+
 
 	//Leitura da imagem
 	for(iForImagem=0; iForImagem<cabecalho.altura; iForImagem++){
@@ -221,9 +232,9 @@ int main(int argc, char **argv ){
             }
 
             //Substituir valores pela mediana de cada pixel
-			imagem[iForImagem][jForImagem].red    = rgbAux[posicaoMediana].red;
-			imagem[iForImagem][jForImagem].green  = rgbAux[posicaoMediana].green;
-			imagem[iForImagem][jForImagem].blue   = rgbAux[posicaoMediana].blue;
+			imagemSaida[iForImagem][jForImagem].red    = rgbAux[posicaoMediana].red;
+			imagemSaida[iForImagem][jForImagem].green  = rgbAux[posicaoMediana].green;
+			imagemSaida[iForImagem][jForImagem].blue   = rgbAux[posicaoMediana].blue;
 		}
 	}
 
@@ -236,7 +247,7 @@ int main(int argc, char **argv ){
 		}
 
 		for(jForImagem=0; jForImagem<cabecalho.largura; jForImagem++){
-			fwrite(&imagem[iForImagem][jForImagem], sizeof(RGB), 1, fout);
+			fwrite(&imagemSaida[iForImagem][jForImagem], sizeof(RGB), 1, fout);
 		}
 
 		for(jForImagem=0; jForImagem<ali; jForImagem++){
