@@ -51,11 +51,17 @@ int main(int argc, char **argv ){
 	int ali, limiteI, limiteJ, iForOrdenar, jForOrdenar;
 	int iTamanhoAux, posicaoMediana, lacoI, lacoJ, iTamanhoAux2;
 	int range;
+	int np, id;
 
 	if ( argc != 4){
 		printf("%s <img_entrada> <img_saida> <mascara> \n", argv[0]);
 		exit(0);
 	}
+
+
+	MPI_Init(&argc, &argv);
+	MPI_Comm_size(MPI_COMM_WORLD, &np);
+	MPI_Comm_rank(MPI_COMM_WORLD, &id);
 
 	entrada = argv[1];
 	saida = argv[2];
@@ -85,6 +91,8 @@ int main(int argc, char **argv ){
 	fwrite(&cabecalho, sizeof(CABECALHO), 1, fout);
 
 	//Alocar imagem
+	RGB rgbAux[tamanhoMascara*tamanhoMascara];
+	RGB rgbAux2;
 	RGB **imagem  = (RGB **)malloc(cabecalho.altura*sizeof(RGB *));
 	RGB **imagemSaida  = (RGB **)malloc(cabecalho.altura*sizeof(RGB *));
 	
@@ -93,8 +101,8 @@ int main(int argc, char **argv ){
 		imagemSaida[iForImagem] = (RGB *)malloc(cabecalho.largura*sizeof(RGB));
 	}
 
-	RGB rgbAux[tamanhoMascara*tamanhoMascara];
-	RGB rgbAux2;
+	MPI_Bcast(imagem, (cabecalho.altura*cabecalho.largura)*sizeof(RGB), MPI_BYTE, 0, MPI_COMM_WORLD);
+	MPI_Bcast(imagemSaida, (cabecalho.altura*cabecalho.largura)*sizeof(RGB), MPI_BYTE, 0, MPI_COMM_WORLD);
 
 	//Leitura da imagem
 	for(iForImagem=0; iForImagem<cabecalho.altura; iForImagem++){
@@ -235,4 +243,6 @@ int main(int argc, char **argv ){
 
 	fclose(fin);
 	fclose(fout);
+
+	MPI_Finalize();
 }
