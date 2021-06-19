@@ -50,8 +50,7 @@ int main(int argc, char **argv ){
 	char aux;
 	int ali, limiteI, limiteJ, iForOrdenar, jForOrdenar;
 	int iTamanhoAux, posicaoMediana, lacoI, lacoJ, iTamanhoAux2;
-
-
+	int range;
 
 	if ( argc != 4){
 		printf("%s <img_entrada> <img_saida> <mascara> \n", argv[0]);
@@ -61,20 +60,6 @@ int main(int argc, char **argv ){
 	entrada = argv[1];
 	saida = argv[2];
     tamanhoMascara = atoi(argv[3]);
-
-
-	/*
-	printf("Digite o nome do arquivo de entrada:\n");
-	scanf("%s", entrada);
-
-	printf("Digite o nome do arquivo de saida:\n");
-	scanf("%s", saida);
-
-    while ((tamanhoMascara != 3) && (tamanhoMascara != 5) && (tamanhoMascara != 7)) {
-        printf("Digite o tamanho da mascara:\n");
-        scanf("%d", &tamanhoMascara);
-    }
-	*/
 
 	FILE *fin = fopen(entrada, "rb");
 
@@ -99,15 +84,17 @@ int main(int argc, char **argv ){
 
 	fwrite(&cabecalho, sizeof(CABECALHO), 1, fout);
 
+	//Alocar imagem
 	RGB **imagem  = (RGB **)malloc(cabecalho.altura*sizeof(RGB *));
 	RGB **imagemSaida  = (RGB **)malloc(cabecalho.altura*sizeof(RGB *));
-
-	//Alocar imagem
+	
 	for(iForImagem=0; iForImagem<cabecalho.altura; iForImagem++){
 		imagem[iForImagem] = (RGB *)malloc(cabecalho.largura*sizeof(RGB));
 		imagemSaida[iForImagem] = (RGB *)malloc(cabecalho.largura*sizeof(RGB));
 	}
 
+	RGB rgbAux[tamanhoMascara*tamanhoMascara];
+	RGB rgbAux2;
 
 	//Leitura da imagem
 	for(iForImagem=0; iForImagem<cabecalho.altura; iForImagem++){
@@ -130,32 +117,24 @@ int main(int argc, char **argv ){
 	for(iForImagem=0; iForImagem<cabecalho.altura; iForImagem++){
 		for(jForImagem=0; jForImagem<cabecalho.largura; jForImagem++){
 			if (tamanhoMascara == 3) {
-				lacoI = iForImagem-1;
-				limiteI = iForImagem + 1;
-
-				lacoJ = jForImagem-1;
-				limiteJ = jForImagem + 1;
-
+				range = 1;
 				posicaoMediana = 4;
 			}
 			else if (tamanhoMascara == 5) {
-				lacoI = iForImagem-2;
-				limiteI = iForImagem + 2;
-
-				lacoJ = jForImagem-2;
-				limiteJ = jForImagem + 2;
-
+				range = 2;
 				posicaoMediana = 12;
 			}
 			else if (tamanhoMascara == 7) {
-				lacoI = iForImagem-3;
-				limiteI = iForImagem + 3;
-
-				lacoJ = jForImagem-3;
-				limiteJ = jForImagem + 3;
-
+				range = 3;
 				posicaoMediana = 24;
 			}
+
+			//Calcular range do laco for para mediana
+			lacoI = iForImagem-range;
+			limiteI = iForImagem + range;
+
+			lacoJ = jForImagem-range;
+			limiteJ = jForImagem + range;
 
             if (lacoI < 0) lacoI = 0;
 			if (lacoJ < 0) lacoJ = 0;
@@ -163,14 +142,13 @@ int main(int argc, char **argv ){
             if (limiteI > (cabecalho.altura - 1))  limiteI = (cabecalho.altura - 1);
 			if (limiteJ > (cabecalho.largura - 1)) limiteJ = (cabecalho.largura - 1);
 
-			RGB rgbAux[tamanhoMascara*tamanhoMascara];
+			//Limpar variaveis auxiliares
             for(iTamanhoAux2=0; iTamanhoAux2<tamanhoMascara*tamanhoMascara; iTamanhoAux2++){
                 rgbAux[iTamanhoAux2].red   = 0;
                 rgbAux[iTamanhoAux2].green = 0;
                 rgbAux[iTamanhoAux2].blue  = 0;
 			}
 
-			RGB rgbAux2;
 			rgbAux2.red   = 0;
             rgbAux2.green = 0;
             rgbAux2.blue  = 0;
