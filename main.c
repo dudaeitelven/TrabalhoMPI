@@ -44,7 +44,7 @@ typedef struct rgb RGB;
 int main(int argc, char **argv ){
 	char *entrada, *saida;
 	int tamanhoMascara, nth;
-	CABECALHO cabecalho;
+
 	int iForImagem, jForImagem;
 	int i2, j2;
 	char aux;
@@ -52,16 +52,23 @@ int main(int argc, char **argv ){
 	int iTamanhoAux, posicaoMediana, lacoI, lacoJ, iTamanhoAux2;
 	int range;
 	int np, id;
+	RGB *imagem, *imagemSaida;
+	RGB *imagemSaidaFinal;
+	RGB *imagemAux;
+
+	MPI_Init(&argc, &argv);
+	//printf("***************************INIT\n");
+	MPI_Comm_size(MPI_COMM_WORLD, &np);
+	//printf("***************************np\n");
+	MPI_Comm_rank(MPI_COMM_WORLD, &id);
+	//printf("***************************id\n");
+
+	CABECALHO cabecalho;
 
 	if ( argc != 4){
 		printf("%s <img_entrada> <img_saida> <mascara> \n", argv[0]);
 		exit(0);
 	}
-
-
-	MPI_Init(&argc, &argv);
-	MPI_Comm_size(MPI_COMM_WORLD, &np);
-	MPI_Comm_rank(MPI_COMM_WORLD, &id);
 
 	entrada = argv[1];
 	saida = argv[2];
@@ -80,49 +87,69 @@ int main(int argc, char **argv ){
 		printf("Erro ao abrir o arquivo %s\n", saida);
 		exit(0);
 	}
-
+	//printf("***************************cabecalho leitura\n");
 	fread(&cabecalho, sizeof(CABECALHO), 1, fin);
 
 	printf("Tamanho da imagem: %u\n", cabecalho.tamanho_arquivo);
 	printf("Largura: %d\n", cabecalho.largura);
 	printf("Largura: %d\n", cabecalho.altura);
 	printf("Bits por pixel: %d\n", cabecalho.bits_por_pixel);
-
+	
 	fwrite(&cabecalho, sizeof(CABECALHO), 1, fout);
+	//printf("***************************cabecalho saida\n");
+
+
 
 	//Alocar imagem
 	RGB rgbAux[tamanhoMascara*tamanhoMascara];
-	RGB rgbAux2;
-	RGB **imagem  = (RGB **)malloc(cabecalho.altura*sizeof(RGB *));
-	RGB **imagemSaida  = (RGB **)malloc(cabecalho.altura*sizeof(RGB *));
+	RGB rgbAux2;	
 	
-	for(iForImagem=0; iForImagem<cabecalho.altura; iForImagem++){
-		imagem[iForImagem] = (RGB *)malloc(cabecalho.largura*sizeof(RGB));
-		imagemSaida[iForImagem] = (RGB *)malloc(cabecalho.largura*sizeof(RGB));
+	imagemSaida  = (RGB *)malloc(cabecalho.altura*cabecalho.largura*sizeof(RGB));
+	//printf("***************************imgsaida\n");
+	imagemAux  = (RGB *)malloc(cabecalho.altura/np*cabecalho.largura*sizeof(RGB));
+	//printf("***************************imgaux\n");
+	if (id == 0){
+		imagem  = (RGB *)malloc(cabecalho.altura*cabecalho.largura*sizeof(RGB));
+		imagemSaidaFinal  = (RGB *)malloc(cabecalho.altura*cabecalho.largura*sizeof(RGB));
+		//printf("***************************ALOCA\n");
+
+			//Leitura da imagem
+		//printf("***************************LEITURA\n");
+		for(iForImagem=0; iForImagem<cabecalho.altura; iForImagem++){
+			//printf("***************************Dentro for\n");
+			ali = (cabecalho.largura * 3) % 4;
+
+			if (ali != 0){
+				ali = 4 - ali;
+			}
+
+			for(jForImagem=0; jForImagem<cabecalho.largura; jForImagem++){
+				//printf("***************************antes ler\n");
+				fread(&imagem[iForImagem * cabecalho.altura + jForImagem], sizeof(RGB), 1, fin);
+				//printf("***************************LEu\n");
+			}
+
+			for(jForImagem=0; jForImagem<ali; jForImagem++){
+				fread(&aux, sizeof(unsigned char), 1, fin);
+			}
+		}
+
 	}
 
-	MPI_Bcast(imagem, (cabecalho.altura*cabecalho.largura)*sizeof(RGB), MPI_BYTE, 0, MPI_COMM_WORLD);
 	MPI_Bcast(imagemSaida, (cabecalho.altura*cabecalho.largura)*sizeof(RGB), MPI_BYTE, 0, MPI_COMM_WORLD);
+	MPI_Scatter(imagem,cabecalho.altura/np*cabecalho.largura*sizeof(RGB), MPI_BYTE,
+		imagemAux,cabecalho.altura/np*cabecalho.largura*sizeof(RGB),MPI_BYTE,0,MPI_COMM_WORLD);
+	
+	//MPI_Bcast(imagem, (cabecalho.altura*cabecalho.largura)*sizeof(RGB), MPI_BYTE, 0, MPI_COMM_WORLD);
+	
 
-	//Leitura da imagem
-	for(iForImagem=0; iForImagem<cabecalho.altura; iForImagem++){
-		ali = (cabecalho.largura * 3) % 4;
 
-		if (ali != 0){
-			ali = 4 - ali;
-		}
+/*
 
-		for(jForImagem=0; jForImagem<cabecalho.largura; jForImagem++){
-			fread(&imagem[iForImagem][jForImagem], sizeof(RGB), 1, fin);
-		}
-
-		for(jForImagem=0; jForImagem<ali; jForImagem++){
-			fread(&aux, sizeof(unsigned char), 1, fin);
-		}
-	}
+	
 
 	//Processar imagem
-	for(iForImagem=0; iForImagem<cabecalho.altura; iForImagem++){
+	for(iForImagem=0; iForImagem<cabecalho.altura/np; iForImagem++){
 		for(jForImagem=0; jForImagem<cabecalho.largura; jForImagem++){
 			if (tamanhoMascara == 3) {
 				range = 1;
@@ -167,9 +194,9 @@ int main(int argc, char **argv ){
 			//Calcular a mediana de cada pixel da imagem.
 			for(i2=lacoI; i2<=limiteI; i2++){
 				for(j2=lacoJ; j2<=limiteJ; j2++){
-					rgbAux[iTamanhoAux].red   = imagem[i2][j2].red;
-					rgbAux[iTamanhoAux].green = imagem[i2][j2].green;
-					rgbAux[iTamanhoAux].blue  = imagem[i2][j2].blue;
+					rgbAux[iTamanhoAux].red   = imagemAux[i2][j2].red;
+					rgbAux[iTamanhoAux].green = imagemAux[i2][j2].green;
+					rgbAux[iTamanhoAux].blue  = imagemAux[i2][j2].blue;
 
 					iTamanhoAux++;
 				}
@@ -225,7 +252,7 @@ int main(int argc, char **argv ){
 	}
 
 	//Escrever a imagem
-	for(iForImagem=0; iForImagem<cabecalho.altura; iForImagem++){
+	for(iForImagem=0; iForImagem<cabecalho.altura/np; iForImagem++){
 		ali = (cabecalho.largura * 3) % 4;
 
 		if (ali != 0){
@@ -240,7 +267,7 @@ int main(int argc, char **argv ){
 			fwrite(&aux, sizeof(unsigned char), 1, fout);
 		}
 	}
-
+*/
 	fclose(fin);
 	fclose(fout);
 
