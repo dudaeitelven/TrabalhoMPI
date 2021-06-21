@@ -55,6 +55,9 @@ int main(int argc, char **argv ){
 	RGB *imagem, *imagemSaida;
 	RGB *imagemSaidaFinal;
 	RGB *imagemAux;
+	double ti,tf;
+
+
 
 	MPI_Init(&argc, &argv);
 	MPI_Comm_size(MPI_COMM_WORLD, &np);
@@ -94,6 +97,8 @@ int main(int argc, char **argv ){
 	*/
 	fwrite(&cabecalho, sizeof(CABECALHO), 1, fout);
 
+	 
+
 	//Alocar imagem
 	RGB rgbAux[tamanhoMascara*tamanhoMascara];
 	RGB rgbAux2;	
@@ -123,6 +128,8 @@ int main(int argc, char **argv ){
 		}
 
 	}
+
+	tf = MPI_Wtime();
 
 	MPI_Bcast(imagemSaida, (cabecalho.altura*cabecalho.largura)*sizeof(RGB), MPI_BYTE, 0, MPI_COMM_WORLD);
 
@@ -240,6 +247,7 @@ int main(int argc, char **argv ){
 	MPI_Gather(imagemSaida,cabecalho.altura/np*cabecalho.largura*sizeof(RGB), MPI_BYTE,
 		imagemSaidaFinal, cabecalho.altura/np*cabecalho.largura*sizeof(RGB), MPI_BYTE, 0, MPI_COMM_WORLD);
 	
+	
 
 	if (id == 0){
 		//Escrever a imagem
@@ -261,6 +269,15 @@ int main(int argc, char **argv ){
 	}
 	fclose(fin);
 	fclose(fout);
+
+	tf = MPI_Wtime();
+
+	if ( id == 0 ){
+		printf("Arquivo gerado: %s", saida);
+		printf("Mascara: %d\n", tamanhoMascara);
+		printf("Tempo de execução: %f\n", tf - ti);
+	}
+	
 
 	MPI_Finalize();
 }
