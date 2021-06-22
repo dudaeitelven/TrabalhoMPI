@@ -273,8 +273,8 @@ int main(int argc, char **argv ){
 	tf = MPI_Wtime();
 
 	if ( id == 0 ){
-		printf("Arquivo gerado: %s", saida);
-		printf("Mascara: %d\n", tamanhoMascara);
+		printf("Arquivo gerado: %s com a ", saida);
+		printf("mascara: %d\n", tamanhoMascara);
 		printf("Tempo de execução: %f\n", tf - ti);
 	}
 	
