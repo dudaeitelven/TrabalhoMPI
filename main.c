@@ -129,7 +129,7 @@ int main(int argc, char **argv ){
 
 	}
 
-	tf = MPI_Wtime();
+	ti = MPI_Wtime();
 
 	MPI_Bcast(imagemSaida, (cabecalho.altura*cabecalho.largura)*sizeof(RGB), MPI_BYTE, 0, MPI_COMM_WORLD);
 
